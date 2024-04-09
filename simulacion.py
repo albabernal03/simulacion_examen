@@ -1,0 +1,75 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+import math
+
+#NOTA# Hemos notado que al aumentar la conductividad se disipa el calor más rápido
+##!!!nota!!!: Esto es con Gauss Seiden y lo hacemos para que no converja
+#ESTO ES DIFERENCIAS REGRESIVAS
+
+
+
+# Entrada de parámetros
+N = int(input('Ingresar valor de N: '))
+M = int(input('Ingresar valor de M: '))
+a= float(input('Ingresar valor de a: '))
+b = float(input('Ingresar valor de b: ')) # Longitud de la cuerda o barilla
+c = float(input('Ingresar valor de c: ')) # Tiempo final
+d = float(input('Ingresar valor de d: ')) # Tiempo final
+
+# Cálculo de pasos
+h = b / N
+k = (d+1) / M
+
+#conductivida maxima
+'''conductividad_maxima = h/math.sqrt(2*k)
+print(f'La conductividad maxima que soporta es: {conductividad_maxima}')'''
+ #A PARTIR DE ESTA VELOCIDAD SE VUELVE 
+
+
+
+# Inicialización de la matriz w con dimensiones correctas
+w = np.zeros((N+1, M+1))  # +1 para incluir los bordes
+
+
+
+for i in range(N):
+    w[i][0] = 10*h*i*(1-(h*i))  # Frontera inferior, recordar que xi= xo(a) + ih
+    w[i][M] = -5 # Frontera superior, recordar que xi= xo(a) + ih
+
+for j in range(M):
+    w[0][j] = 5*(-1+j*k )#Frontera izquierda, recordar que t_i =yo(c)+jk #Fronetera izquierda (0,t)
+    w[N][j] = 5*np.sin(2*np.pi*(-1+j*k)) #Frontera derecha (b,t)
+
+
+
+for iter in range(100):  # Número de iteraciones
+    for j in range(1,M):
+        for i in range(1, N):
+            #w[i][j] = ((k/h**2)*(w[i+1][j] + w[i-1][j]) + (1+h*i)*w[i][j-1])/(1+h*i+2*(k/h**2))
+            #w[i][j]= (-k*(w[i+1][j]+w[i-1][j])-h**2*(1+h*i)*w[i][j-1])/(-2*k-h**2*(1+h*i)+k*h**2)
+            #w[i][j]= (-4*k*(w[i+1][j]+w[i-1][j])-h*(w[i+1][j+1]+w[i-1][j-1]-w[i-1][j+1]-w[i+1][j-1]))/(-8*k)
+            #w[i][j]= (-4*k**2*(w[i+1][j]+w[i-1][j])-h*k*(w[i+1][j+1]+w[i-1][j-1]-w[i-1][j+1]-w[i+1][j-1])-4*h**2*(w[i][j+1]+w[i][j-1]))/(-8*(k**2+h**2))
+            #w[i][j]= (-2*k**2*(w[i+1][j]+w[i-1][j])-h*k*(w[i+1][j+1]+w[i-1][j-1]-w[i-1][j+1]-w[i+1][j-1])-2*h**2*(w[i][j+1]+w[i][j-1]))/(-4*(k**2+h**2))
+            w[i][j]= (i*h**3*(w[i][j+1]+w[i][j-1])-(-1+j*k)*k**2*(w[i+1][j]+w[i-1][j]))/(2*(k**2-k**3*j+h**3*i))
+
+
+# Crear una malla de coordenadas para graficar
+x = np.linspace(a, b, N+1) #lo del principio corresponde con a
+t = np.linspace(c, d, M+1) #ºlo del principio corresponde con c
+X, T = np.meshgrid(x, t)
+
+# Crear la figura y el eje para la gráfica 3D
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+
+# Graficar la superficie
+surf = ax.plot_surface(X, T, w.T, cmap='viridis', edgecolor='none')  # Transponer w para que coincida con las dimensiones de X y Y
+ax.set_title('Superficie 3D de la Matriz w')
+ax.set_xlabel('X')
+ax.set_ylabel('T')
+ax.set_zlabel('w')
+
+# Añadir barra de colores para la escala
+fig.colorbar(surf)
+plt.show()
